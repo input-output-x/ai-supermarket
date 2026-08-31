@@ -1,0 +1,23 @@
+# AI 超市 · 后端（FastAPI）镜像
+# 构建上下文 = 仓库根目录（web/ 与 ai_supermarket/ 都在镜像内，保证 core 包可被 import）
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# 视频合成依赖（本地 fallback / 百炼后处理需要 ffmpeg）
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY . /app/ai_supermarket
+WORKDIR /app/ai_supermarket/web/backend
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 容器内默认 sqlite 路径（生产可把 DATABASE_URL 覆盖为 MySQL 连接串）
+ENV DATABASE_URL=sqlite:////app/ai_supermarket/web/backend/web_backend.db
+
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

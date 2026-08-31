@@ -131,6 +131,25 @@ git sparse-checkout add ai_supermarket/agents/topic.py
 - 想更彻底地"每个 Agent 一个仓库"，可把 `agents/*` 拆成 git submodule（主仓用 submodule 引用，clone 时 `--recurse-submodules=<只选的>`）；但小项目维护成本高，一般先用 sparse-checkout 即可。
 - 注意：**终端客户不使用 git**。客户用的"任选 Agent"发生在部署出去的 Web 工坊（见 `web/`，含 Agent 货架 + 套餐权限壳），与 clone 无关。
 
+## 部署（让客户真正能访问）
+
+AI 超市是一套 **Docker 一键部署**的 Web 应用：后端 FastAPI + 前端 Vue3/nginx，compose 编排。
+
+```bash
+cd ai_supermarket
+cp web/backend/.env.example .env      # 按需填 DEEPSEEK_API_KEY / DOUYIN_* / DASHSCOPE_API_KEY
+docker compose up -d --build          # 构建并启动
+# 访问 http://<服务器IP>:8080
+```
+
+- 后端：`Dockerfile.backend`（python:3.11-slim + ffmpeg，端口 8000），`ai_supermarket/` 整仓进镜像以保证 `core` 包可 import。
+- 前端：`Dockerfile.frontend`（node 构建 → nginx 托管 SPA），`nginx.conf` 把 `/api`、`/videos`、`/uploads` 反代到后端。
+- 数据库默认容器内 SQLite（`backend_storage` 卷持久化）；生产改 `DATABASE_URL` 为 MySQL 连接串即可。
+- 生成的视频/上传存于 `backend_storage` 卷，重启不丢。
+- 端口：前端 8080（外网）、后端 8000（内网，无需对外暴露）。
+
+> 也可用 Serverless 静态托管（CloudBase / Vercel）放前端 + 云函数放后端，思路相同：前端构建产物托管，API 走反向代理到后端服务。
+
 ## 后续待办
 
 - ✅ `ai-delivery` / `ai-analytics` 已落地（交付 SOP / 数据复盘，真实 LLM + 启发式兜底）。
