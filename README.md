@@ -12,6 +12,7 @@
 - ✅ **网关**：`gateway.py` 注册当前全部 Agent，`POST /pipeline` 串主链路，`GET /health` 展示 Agent 列表。
 - ✅ **AI 口播视频工坊（Web）**：Vue + FastAPI + MySQL，上传图片 + 口播稿即可生成 9:16 竖版口播视频；唇形同步支持可插拔 Provider：**本地 fallback**（edge-tts+字幕+嘴部动画）与 **阿里云百炼 wan2.2-s2v 真实数字人（逼真对口型）**。
 - ✅ **Agent 货架 + 套餐权限壳（Web）**：`/api/agents` 按客户套餐（free/pro/enterprise）返回可用/锁定 Agent 列表；客户可自由选用——选题/脚本/客服/财税为**真实大模型输出**，video 为真实成片，delivery/analytics 为脚手架提示。新增 Agent = 在 `web/backend/agents_registry.py` 加一条。
+- ✅ **计费 / 支付（Web）**：Stripe 真实收款已接入——`/api/billing/plans`（价格）、`/api/billing/checkout`（创建结账跳转 Stripe 托管页）、`/api/billing/webhook/stripe`（支付成功 → 升级套餐 + 重置额度）；前端「套餐 / 计费」页（`/billing`）三档套餐卡片一键升级。微信支付 `WeChatProvider` 为预留骨架（实现 `WeChatProvider` 抽象即可启用）。
 
 ## 目录结构
 
@@ -157,4 +158,5 @@ docker compose up -d --build          # 构建并启动
 - 🔲 `ai-video` 可接云端文生视频替换背景生成。
 - 🔲 `ai-service` 接评论/私域 API，把流量真正接住转私域。
 - 🔲 Web 工坊接 HeyGen / D-ID / Kling 等更多真实唇形同步 Provider（百炼 wan2.2-s2v 已接入，HeyGen 已预留）。
-- ✅ 货架收费基础已落地：客户使用额度计量（`usage_records` 表 + `PLAN_QUOTA`：free=10/pro=300/enterprise 不限），超额 403 拦截；货架展示剩余额度，`GET /api/usage` 看分布。真实收款需另接支付。
+- ✅ 货架收费基础已落地：客户使用额度计量（`usage_records` 表 + `PLAN_QUOTA`：free=10/pro=300/enterprise 不限），超额 403 拦截；货架展示剩余额度，`GET /api/usage` 看分布。
+- ✅ 真实收款已打通：Stripe Hosted Checkout + Webhook（`/api/billing/webhook/stripe`）支付成功后自动升级套餐并重置额度；`billing.py` 的 `PaymentProvider` 抽象支持后续接入微信/支付宝等，调用方无需改动。

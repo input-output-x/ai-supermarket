@@ -5,6 +5,7 @@
       <nav class="tabs">
         <RouterLink to="/" exact-active-class="active">口播视频工坊</RouterLink>
         <RouterLink to="/shelf" active-class="active">Agent 货架</RouterLink>
+        <RouterLink to="/billing" active-class="active">套餐 / 计费</RouterLink>
       </nav>
     </header>
     <main>

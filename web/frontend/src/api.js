@@ -37,6 +37,18 @@ export function getUsage(apiKey) {
   return api.get('/api/usage', { headers: apiKey ? { 'X-API-Key': apiKey } : {} })
 }
 
+// 计费：套餐与价格列表
+export function getPlans() {
+  return api.get('/api/billing/plans')
+}
+
+// 计费：创建升级结账会话（Stripe 返回托管页 URL）
+export function checkoutPlan(plan, provider, apiKey) {
+  return api.post('/api/billing/checkout', { plan, provider: provider || 'stripe' }, {
+    headers: apiKey ? { 'X-API-Key': apiKey } : {},
+  })
+}
+
 export function listVideos() {
   return api.get('/api/videos')
 }

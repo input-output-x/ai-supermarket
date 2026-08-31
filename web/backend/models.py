@@ -42,3 +42,19 @@ class UsageRecord(Base):
     customer_id = Column(Integer, index=True, nullable=False)
     agent_id = Column(String(64), index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class PlanOrder(Base):
+    """套餐订单（计费/支付记录）。支付成功 → 升级客户套餐 + 重置额度。"""
+
+    __tablename__ = "plan_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    customer_id = Column(Integer, index=True, nullable=False)
+    plan = Column(String(32), nullable=False)          # 目标套餐
+    provider = Column(String(32), default="stripe")    # stripe / wechat
+    amount_cents = Column(Integer, default=0)
+    status = Column(String(16), default="pending")     # pending / paid / failed
+    session_id = Column(String(255), nullable=True)    # 支付方会话 ID
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    paid_at = Column(DateTime, nullable=True)

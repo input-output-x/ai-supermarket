@@ -11,10 +11,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from database import engine, Base, get_db, SessionLocal
-from models import VideoJob, Customer, UsageRecord
+from models import VideoJob, Customer, UsageRecord, PlanOrder
 from schemas import VideoOut
 from video_engine import get_provider
 from agents_registry import AGENTS, PLANS, get_agent, get_shelf, get_quota
+from billing import list_plans, PLAN_PRICES, get_provider as get_pay_provider
 
 # 让 web 后端能复用核心包的 LLM 能力（Deepseek 等真实大模型）
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -214,6 +215,69 @@ def usage(customer: Customer = Depends(get_customer), db: Session = Depends(get_
         "remaining": None if limit is None else max(limit - used, 0),
         "by_agent": by_agent,
     }
+
+
+# ---------- AI 超市 · 计费 / 支付 ----------
+
+@app.get("/api/billing/plans")
+def billing_plans():
+    """套餐与价格列表（前端升级页用）。"""
+    return {"plans": list_plans(), "currency": "cny"}
+
+
+@app.post("/api/billing/checkout")
+async def billing_checkout(request: Request, customer: Customer = Depends(get_customer), db: Session = Depends(get_db)):
+    """创建升级结账会话。Stripe 返回托管结账页 URL；未配置凭证则返回清晰提示。"""
+    data = await request.json()
+    plan = data.get("plan")
+    provider = data.get("provider", "stripe")
+    if plan not in PLANS:  # 仅允许已知套餐
+        raise HTTPException(status_code=400, detail="未知套餐")
+    if plan == customer.plan:
+        raise HTTPException(status_code=400, detail=f"当前已是 {plan} 套餐")
+    pay = get_pay_provider(provider)
+    if not pay.is_configured():
+        return {"status": "unconfigured", "provider": provider,
+                "message": f"未配置 {provider} 支付凭证（参考 .env.example）"}
+    base = os.getenv("PUBLIC_BASE_URL", str(request.base_url).rstrip("/"))
+    success_url = f"{base}/#/billing?result=success"
+    cancel_url = f"{base}/#/billing?result=cancel"
+    res = pay.create_checkout(customer.api_key, plan, success_url, cancel_url)
+    if res.get("status") == "ok":
+        db.add(PlanOrder(customer_id=customer.id, plan=plan, provider=provider,
+                         amount_cents=PLAN_PRICES.get(plan, 0), status="pending",
+                         session_id=res.get("session_id")))
+        db.commit()
+        return {"status": "ok", "provider": provider, "url": res["url"]}
+    return {"status": res.get("status", "error"), "provider": provider, "message": res.get("message")}
+
+
+@app.post("/api/billing/webhook/stripe")
+async def billing_webhook_stripe(request: Request, db: Session = Depends(get_db)):
+    """Stripe 支付成功回调：校验签名 → 升级客户套餐 + 重置额度。"""
+    payload = await request.body()
+    sig = request.headers.get("Stripe-Signature", "")
+    pay = get_pay_provider("stripe")
+    event = pay.verify_webhook(payload, sig)
+    if event is None:
+        raise HTTPException(status_code=400, detail="签名校验失败")
+    plan, api_key = pay.parse_paid_plan(event)
+    if not plan or not api_key:
+        return {"received": True, "ignored": True}
+    cust = db.query(Customer).filter(Customer.api_key == api_key).first()
+    if not cust:
+        return {"received": True, "unknown_customer": True}
+    # 升级套餐 + 重置额度（新计费周期）
+    cust.plan = plan
+    db.query(UsageRecord).filter(UsageRecord.customer_id == cust.id).delete()
+    order = db.query(PlanOrder).filter(
+        PlanOrder.customer_id == cust.id, PlanOrder.plan == plan, PlanOrder.status == "pending"
+    ).order_by(PlanOrder.id.desc()).first()
+    if order:
+        order.status = "paid"
+        order.paid_at = datetime.datetime.utcnow()
+    db.commit()
+    return {"received": True, "upgraded": plan, "customer": cust.name}
 
 
 def _build_llm_prompt(agent: dict, data: dict) -> str:

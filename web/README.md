@@ -88,6 +88,27 @@ Web 工坊不仅是视频工具，也是 **AI 超市的货架**：客户登录�
 
 > 前端「Agent 货架」页（`/shelf`）提供套餐切换体验：切换 free/pro/enterprise 可直观看到哪些 Agent 被锁定。
 
+### 计费 / 支付（让额度真正可收费）
+
+货架 + 额度计量已就位后，对接支付即可把"调用额度"变成可收费套餐。当前实现 **Stripe 真实收款**（微信支付为占位骨架）。
+
+**后端接口：**
+- `GET /api/billing/plans`：返回套餐与价格列表（`price_cents` 单位分，`currency=cny`）。
+- `POST /api/billing/checkout`：创建升级结账会话。
+  - body：`{ "plan": "pro"|"enterprise", "provider": "stripe" }`，请求头带 `X-API-Key` 标识客户。
+  - 配置好 Stripe 凭证时返回 `{ "status": "ok", "url": "<Stripe 托管结账页>" }` → 前端直接跳转。
+  - 未配置凭证时返回 `{ "status": "unconfigured" }` → 前端给出"请先配置凭证"提示，不阻断体验。
+- `POST /api/billing/webhook/stripe`：Stripe 支付成功回调。
+  - 校验 `Stripe-Signature` 签名（HMAC-SHA256）→ 解析出 `plan` 与 `api_key` → 升级该客户套餐、清空 `UsageRecord`（重置额度，开启新计费周期）、把 `plan_orders` 置为 `paid`。
+
+**配置（`.env`）：** 见 `backend/.env.example`，需填 `STRIPE_SECRET_KEY`、`STRIPE_WEBHOOK_SECRET`、`PUBLIC_BASE_URL`（回调与跳转用的公网基址）。
+
+**价格（分，定义在 `backend/billing.py` 的 `PLAN_PRICES`）：** `free=0` / `pro=9900(¥99)` / `enterprise=29900(¥299)`。
+
+**说明：** 微信支付 `WeChatProvider` 已留接口（`is_configured` / `create_checkout` / `verify_webhook` / `parse_paid_plan`），按 `WECHAT_*` 环境变量接入 V3 API 即可启用，无需改动调用方。
+
+**前端「套餐 / 计费」页（`/billing`）：** 三档套餐卡片（价格、可用 Agent、额度文案），点"升级到"调 `checkoutPlan` → 跳转 Stripe 托管页；无凭证时显示配置指引。
+
 ### 3. 前端
 
 ```bash
