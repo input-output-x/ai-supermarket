@@ -14,6 +14,8 @@ from .agents.script import ScriptAgent
 from .agents.video import VideoAgent
 from .agents.publish import PublishAgent
 from .agents.service import ServiceAgent
+from .agents.delivery import DeliveryAgent
+from .agents.analytics import AnalyticsAgent
 
 
 class AiSupermarketGateway:
@@ -25,6 +27,9 @@ class AiSupermarketGateway:
             self.registry.register(agent)
         # 承接层：客服 Agent 注册进注册中心，供 /health 展示与单独调用
         self.registry.register(ServiceAgent())
+        # 交付层 / 复盘层：真逻辑已落地，注册进注册中心
+        self.registry.register(DeliveryAgent())
+        self.registry.register(AnalyticsAgent())
 
     def run(self, keyword: str) -> dict:
         ctx = self.orchestrator.run_daily_pipeline(keyword)

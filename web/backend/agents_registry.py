@@ -2,8 +2,8 @@
 
 所有可上架的 Agent 都在这里声明：元数据 + 输入字段 schema + 套餐层级 + 处理器类型。
 - handler="video"  → 复用口播视频工坊流程（真实生成 9:16 视频）
-- handler="llm"    → 通用大模型调用（选题/脚本/客服/财税等纯文本 Agent，真实输出）
-- handler="scaffold" → 脚手架 Agent，返回"待交付"提示（delivery/analytics）
+- handler="llm"    → 通用大模型调用（选题/脚本/客服/财税/交付/复盘等纯文本 Agent，真实输出）
+- handler="scaffold" → 脚手架 Agent，返回"待交付"提示（仅 publish 抖音开放平台接口待接入）
 
 套餐：free < pro < enterprise，决定客户能用哪些 Agent。
 新增 Agent = 在这里加一条 + （如需要）在 main.py 的 _run_llm / _run_video 里接逻辑。
@@ -114,9 +114,12 @@ AGENTS = [
         "name": "交付调度",
         "icon": "📦",
         "category": "专业服务",
-        "description": "代运营/数字人/写真/Agent 搭建的交付 SOP 调度（待交付）",
+        "description": "把订单/需求拆成可执行交付 SOP：交付物清单、步骤、角色、工期、验收标准",
         "tier": "enterprise",
-        "handler": "scaffold",
+        "handler": "llm",
+        "system_prompt": "你是 AI 获客代运营的交付调度专家。根据用户给的订单/需求（数字人视频/代运营/写真/Agent 搭建等），"
+                        "输出一份可执行交付 SOP：交付物清单、执行步骤（含角色与工期）、验收标准。"
+                        "只返回 JSON：{type, deliverables:[], steps:[{step,owner,days}], acceptance:[], total_days}",
         "input_schema": [
             {"key": "order", "label": "订单/需求", "type": "textarea", "required": True},
         ],
@@ -126,9 +129,12 @@ AGENTS = [
         "name": "数据复盘",
         "icon": "📊",
         "category": "专业服务",
-        "description": "看播放/转化，反哺选题与脚本权重（待交付）",
+        "description": "看播放/转化/互动，产出复盘结论并反哺下一期选题与脚本权重",
         "tier": "enterprise",
-        "handler": "scaffold",
+        "handler": "llm",
+        "system_prompt": "你是短视频数据复盘专家。根据给出的播放/转化/互动等数据，输出复盘结论："
+                        "核心指标解读、亮点、问题、对下一期选题与脚本权重的建议。"
+                        "只返回 JSON：{summary, highlights:[], issues:[], next_actions:[{area, action, weight}]}",
         "input_schema": [
             {"key": "metrics", "label": "数据（播放/转化等）", "type": "textarea", "required": True},
         ],
