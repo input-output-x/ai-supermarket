@@ -14,3 +14,10 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .venv/
+
+# ===== Web =====
+node_modules/
+dist/
+web/backend/storage/
+web/backend/*.db
+web/backend/.env
