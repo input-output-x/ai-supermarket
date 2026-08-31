@@ -506,18 +506,25 @@ class BailianProvider(LipSyncProvider):
             res["message"] = "百炼上传图片失败，已降级为本地 fallback"
             return res
 
-        # 3) 切片 + 逐段生成
+        # 3) 切片 + 逐段生成（每段失败最多重试 1 次，仍失败才降级本地 fallback）
         chunks = self._split_audio(str(audio_path), out_dir)
         seg_videos = []
         for i, ch in enumerate(chunks):
             audio_url = self._upload(ch, api_key)
             if not audio_url:
                 break
-            task_id = self._create_task(image_url, audio_url, api_key)
-            if not task_id:
-                break
-            result_url = self._poll(task_id, api_key)
+            result_url = None
+            for attempt in range(2):  # 0=首次，1=重试一次
+                task_id = self._create_task(image_url, audio_url, api_key)
+                if not task_id:
+                    print(f"[bailian] 第{i}段 创建任务失败（尝试 {attempt+1}/2）")
+                    continue
+                result_url = self._poll(task_id, api_key)
+                if result_url:
+                    break
+                print(f"[bailian] 第{i}段 轮询未拿到视频（尝试 {attempt+1}/2）")
             if not result_url:
+                print("[bailian] 分段百炼生成重试后仍失败")
                 break
             local_v = out_dir / f"{base}_bailian_{i}.mp4"
             if self._download(result_url, local_v):
