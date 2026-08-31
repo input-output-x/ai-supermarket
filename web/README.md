@@ -66,8 +66,10 @@ Web 工坊不仅是视频工具，也是 **AI 超市的货架**：客户登录�
   - 请求头带 `X-API-Key` 区分客户；不带则按 `free` 套餐（匿名体验）。
 - `POST /api/agents/{id}/run`：运行指定 Agent。
   - `video` 类走 multipart（image + script + voice + provider），返回视频任务号。
-  - 纯文本类（`topic`/`script`/`service`/`finance`）走 JSON，走真实大模型（Deepseek）输出。
-  - `scaffold` 类（`delivery`/`analytics`）返回"待交付"提示。
+  - 纯文本类（`topic`/`script`/`service`/`finance`/`delivery`/`analytics`）走 JSON，走真实大模型（Deepseek）输出（无 key 时走启发式兜底，仍返回结构化结果）。
+  - `publish` 类（`抖音发布`）走 JSON（video_path + title）：未配置抖音凭证时返回授权链接，已授权则上传并发布成片。
+- `GET /api/agents/publish/auth`：返回抖音开放平台 OAuth 授权链接（需先配置 `DOUYIN_CLIENT_KEY`）。
+- `POST /api/agents/publish/exchange`：用 OAuth `code` 换取 `access_token` / `open_id`（写入环境变量后重启即可发布）。
 
 套餐（权限壳核心，定义在 `backend/agents_registry.py`）：
 

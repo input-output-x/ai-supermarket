@@ -33,7 +33,7 @@ ai_supermarket/
 │   │   ├── topic.py            选题：LLM + 热点源 + 向量去重
 │   │   ├── script.py           脚本：选题 -> 口播稿/分镜
 │   │   ├── video.py            视频：口播稿 -> 配音+字幕竖版成片
-│   │   ├── publish.py          发布：成片 -> 多平台（接开放平台API 处已标 TODO）
+│   │   ├── publish.py          发布：抖音开放平台 OAuth + 上传 + 发布（真实接入，env 驱动）
 │   │   ├── service.py          客服：意图分类 + 线索 + 话术 + 路由
 │   │   ├── delivery.py         交付（脚手架，待填）
 │   │   └── analytics.py        数据复盘（脚手架，待填）
@@ -133,8 +133,9 @@ git sparse-checkout add ai_supermarket/agents/topic.py
 
 ## 后续待办
 
-- 🔲 `ai-delivery` / `ai-analytics` 落地（交付层 / 交易反馈）。
-- 🔲 `ai-publish` 接抖音/视频号开放平台真实发布 API。
+- ✅ `ai-delivery` / `ai-analytics` 已落地（交付 SOP / 数据复盘，真实 LLM + 启发式兜底）。
+- ✅ `ai-publish` 已接抖音开放平台真实流程（OAuth 授权 + 上传 + 发布，env 驱动；未配置凭证时返回授权链接，不假成功）。需用户自有 `DOUYIN_CLIENT_KEY/SECRET` 并完成 OAuth 才能实际发片。
 - 🔲 `ai-video` 可接云端文生视频替换背景生成。
 - 🔲 `ai-service` 接评论/私域 API，把流量真正接住转私域。
 - 🔲 Web 工坊接 HeyGen / D-ID / Kling 等更多真实唇形同步 Provider（百炼 wan2.2-s2v 已接入，HeyGen 已预留）。
+- 🔲 货架收费基础：给客户套餐做真实使用额度计量（当前 PLANS 仅控制可见性/可用性）。

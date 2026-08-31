@@ -3,7 +3,7 @@
 所有可上架的 Agent 都在这里声明：元数据 + 输入字段 schema + 套餐层级 + 处理器类型。
 - handler="video"  → 复用口播视频工坊流程（真实生成 9:16 视频）
 - handler="llm"    → 通用大模型调用（选题/脚本/客服/财税/交付/复盘等纯文本 Agent，真实输出）
-- handler="scaffold" → 脚手架 Agent，返回"待交付"提示（仅 publish 抖音开放平台接口待接入）
+- handler="publish" → 抖音开放平台真实对接（OAuth 授权 + 上传 + 发布；未配置时返回授权链接，不假成功）
 
 套餐：free < pro < enterprise，决定客户能用哪些 Agent。
 新增 Agent = 在这里加一条 + （如需要）在 main.py 的 _run_llm / _run_video 里接逻辑。
@@ -72,11 +72,12 @@ AGENTS = [
         "name": "抖音发布",
         "icon": "📤",
         "category": "内容生产",
-        "description": "将成片发布到抖音开放平台（接口待接入）",
+        "description": "抖音开放平台真实发布：OAuth 授权 + 上传 + 发布；未配置凭证时返回授权链接",
         "tier": "pro",
-        "handler": "scaffold",
+        "handler": "publish",
+        "system_prompt": "",
         "input_schema": [
-            {"key": "video_path", "label": "成片路径", "type": "text", "required": True},
+            {"key": "video_path", "label": "成片路径（已授权时填）", "type": "text", "required": False},
             {"key": "title", "label": "发布标题", "type": "text", "required": False},
         ],
     },

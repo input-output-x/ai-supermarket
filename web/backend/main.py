@@ -20,6 +20,8 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 from ai_supermarket.core.llm import get_provider as get_llm_provider  # noqa: E402
+from ai_supermarket.core.context import AgentContext  # noqa: E402
+from ai_supermarket.agents.publish import PublishAgent, DouyinClient  # noqa: E402
 from agents_registry import AGENTS, PLANS, get_agent, get_shelf  # noqa: E402
 
 Base.metadata.create_all(bind=engine)
@@ -229,7 +231,62 @@ async def run_agent(agent_id: str, request: Request, customer: Customer = Depend
             raise HTTPException(status_code=502, detail=f"LLM 调用失败：{e}")
         return {"agent": agent_id, "kind": "llm", "result": result}
 
+    if handler == "publish":
+        if "multipart" in ctype:
+            form = await request.form()
+            data = {k: form.get(k) for k in form.keys()}
+        else:
+            data = await request.json()
+        pub = PublishAgent()
+        ctx = pub.execute(AgentContext({
+            "video_path": data.get("video_path"),
+            "title": data.get("title"),
+            "topicTitle": data.get("title"),
+        }))
+        return {
+            "agent": agent_id,
+            "kind": "publish",
+            "result": {
+                "titleCandidates": ctx.get("titleCandidates"),
+                "hashtags": ctx.get("hashtags"),
+                "publishResult": ctx.get("publishResult"),
+            },
+        }
+
     raise HTTPException(status_code=500, detail="unknown handler")
+
+
+# 抖音开放平台 OAuth：授权链接 + 用 code 换 token（publish Agent 真实对接入口）
+@app.get("/api/agents/publish/auth")
+def publish_auth_url(customer: Customer = Depends(get_customer)):
+    cli = DouyinClient()
+    if not cli.is_configured():
+        raise HTTPException(status_code=400, detail="未配置 DOUYIN_CLIENT_KEY/SECRET")
+    return {"authorize_url": cli.authorize_url() or "（请先设置 DOUYIN_REDIRECT_URI）"}
+
+
+@app.post("/api/agents/publish/exchange")
+async def publish_exchange(request: Request, customer: Customer = Depends(get_customer)):
+    if "publish" not in PLANS.get(customer.plan, set()):
+        raise HTTPException(status_code=403, detail=f"当前套餐({customer.plan})不可用该 Agent")
+    data = await request.json()
+    code = data.get("code")
+    if not code:
+        raise HTTPException(status_code=400, detail="缺少 code")
+    cli = DouyinClient()
+    if not cli.is_configured():
+        raise HTTPException(status_code=400, detail="未配置 DOUYIN_CLIENT_KEY/SECRET")
+    try:
+        resp = cli.exchange_code(code)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"换码失败：{e}")
+    d = resp.get("data") or {}
+    return {
+        "access_token": d.get("access_token"),
+        "open_id": d.get("open_id"),
+        "expires_in": d.get("expires_in"),
+        "hint": "将这两个值分别写入环境变量 DOUYIN_ACCESS_TOKEN / DOUYIN_OPEN_ID 后重启服务即可发布。",
+    }
 
 
 # 静态文件：生成的视频可直接访问
