@@ -138,4 +138,4 @@ git sparse-checkout add ai_supermarket/agents/topic.py
 - 🔲 `ai-video` 可接云端文生视频替换背景生成。
 - 🔲 `ai-service` 接评论/私域 API，把流量真正接住转私域。
 - 🔲 Web 工坊接 HeyGen / D-ID / Kling 等更多真实唇形同步 Provider（百炼 wan2.2-s2v 已接入，HeyGen 已预留）。
-- 🔲 货架收费基础：给客户套餐做真实使用额度计量（当前 PLANS 仅控制可见性/可用性）。
+- ✅ 货架收费基础已落地：客户使用额度计量（`usage_records` 表 + `PLAN_QUOTA`：free=10/pro=300/enterprise 不限），超额 403 拦截；货架展示剩余额度，`GET /api/usage` 看分布。真实收款需另接支付。

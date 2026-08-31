@@ -16,7 +16,20 @@ PLANS = {
     "enterprise": {"video", "topic", "script", "publish", "service", "finance", "delivery", "analytics"},
 }
 
+# 套餐 → 调用额度上限（收费基础）。None = 不限量（enterprise 可作为旗舰档）。
+# 这是"总调用次数"上限，可按需改成"按 Agent / 按月"等更细粒度。
+PLAN_QUOTA = {
+    "free": 10,
+    "pro": 300,
+    "enterprise": None,
+}
+
 PLAN_ORDER = ["free", "pro", "enterprise"]
+
+
+def get_quota(plan: str):
+    """返回该套餐的调用上限（None=不限）。"""
+    return PLAN_QUOTA.get(plan, 10)
 
 
 # Agent 清单。input_schema 字段：key/label/type(text|textarea|select|file)/options/required

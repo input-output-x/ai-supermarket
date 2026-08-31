@@ -32,6 +32,11 @@ export function runAgent(agentId, payload, isFormData, apiKey) {
   return api.post(`/api/agents/${agentId}/run`, payload, { headers })
 }
 
+// 当前客户使用计量（额度/已用/按 Agent 分布）
+export function getUsage(apiKey) {
+  return api.get('/api/usage', { headers: apiKey ? { 'X-API-Key': apiKey } : {} })
+}
+
 export function listVideos() {
   return api.get('/api/videos')
 }

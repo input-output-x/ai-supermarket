@@ -13,6 +13,15 @@
           >{{ planLabel(p) }}</button>
         </div>
       </div>
+      <div class="quota-bar" v-if="quota">
+        <span class="quota-label">调用额度：</span>
+        <span v-if="quota.limit === null" class="quota-unlimited">企业版不限量</span>
+        <span v-else>
+          <b>{{ quota.used }}</b> / {{ quota.limit }}
+          <span class="quota-remaining">（剩余 {{ quota.remaining }}）</span>
+          <span class="quota-track"><span class="quota-fill" :style="{ width: quotaPct + '%' }"></span></span>
+        </span>
+      </div>
       <p class="hint">
         客户登录后按套餐可见不同 Agent；锁定的 Agent 需升级套餐。下方为演示体验密钥切换。
       </p>
@@ -78,13 +87,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { getAgents, runAgent, getDemoKey } from '../api.js'
 
 const plans = ['free', 'pro', 'enterprise']
 const plan = ref('free')
 const agents = ref([])
 const loading = ref(false)
+const quota = ref(null)
 
 const modalAgent = ref(null)
 const formValues = ref({})
@@ -109,12 +119,18 @@ async function loadShelf() {
   try {
     const { data } = await getAgents(getDemoKey(plan.value))
     agents.value = data.agents || []
+    quota.value = data.quota || null
   } catch (e) {
     errorMsg.value = '加载货架失败：' + (e.response?.data?.detail || e.message)
   } finally {
     loading.value = false
   }
 }
+
+const quotaPct = computed(() => {
+  if (!quota.value || quota.value.limit === null || quota.value.limit === 0) return 0
+  return Math.min(100, Math.round((quota.value.used / quota.value.limit) * 100))
+})
 
 function switchPlan(p) {
   plan.value = p
@@ -209,6 +225,12 @@ onMounted(() => {
 }
 .plan-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
 .hint { color: #6b7280; font-size: 13px; margin: 8px 0 20px; }
+.quota-bar { font-size: 13px; color: #374151; margin: 4px 0 16px; display: flex; align-items: center; gap: 6px; }
+.quota-label { color: #6b7280; }
+.quota-unlimited { color: #047857; font-weight: 600; }
+.quota-remaining { color: #6b7280; }
+.quota-track { display: inline-block; width: 120px; height: 8px; background: #e5e7eb; border-radius: 4px; margin-left: 8px; vertical-align: middle; overflow: hidden; }
+.quota-fill { display: block; height: 100%; background: #2563eb; border-radius: 4px; transition: width 0.3s; }
 .cat-block { margin-top: 16px; }
 .cat-block h3 { font-size: 15px; color: #374151; margin: 12px 0; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }

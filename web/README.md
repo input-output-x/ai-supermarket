@@ -70,6 +70,9 @@ Web 工坊不仅是视频工具，也是 **AI 超市的货架**：客户登录�
   - `publish` 类（`抖音发布`）走 JSON（video_path + title）：未配置抖音凭证时返回授权链接，已授权则上传并发布成片。
 - `GET /api/agents/publish/auth`：返回抖音开放平台 OAuth 授权链接（需先配置 `DOUYIN_CLIENT_KEY`）。
 - `POST /api/agents/publish/exchange`：用 OAuth `code` 换取 `access_token` / `open_id`（写入环境变量后重启即可发布）。
+- `GET /api/usage`：当前客户的使用计量（总额度 / 已用 / 剩余 + 按 Agent 分布）。
+
+**套餐额度（收费基础）**：每个客户每次调用任意 Agent 计 1 次，命中套餐上限后该客户再调用被 `403` 拦截（提示"额度已用尽"）。上限定义在 `backend/agents_registry.py` 的 `PLAN_QUOTA`：`free=10` / `pro=300` / `enterprise=None(不限)`。可按需改成"按 Agent / 按月"等更细粒度；计费与真实收款需另行对接支付。
 
 套餐（权限壳核心，定义在 `backend/agents_registry.py`）：
 

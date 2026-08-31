@@ -11,9 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from database import engine, Base, get_db, SessionLocal
-from models import VideoJob, Customer
+from models import VideoJob, Customer, UsageRecord
 from schemas import VideoOut
 from video_engine import get_provider
+from agents_registry import AGENTS, PLANS, get_agent, get_shelf, get_quota
 
 # 让 web 后端能复用核心包的 LLM 能力（Deepseek 等真实大模型）
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -22,7 +23,7 @@ if str(_REPO_ROOT) not in sys.path:
 from ai_supermarket.core.llm import get_provider as get_llm_provider  # noqa: E402
 from ai_supermarket.core.context import AgentContext  # noqa: E402
 from ai_supermarket.agents.publish import PublishAgent, DouyinClient  # noqa: E402
-from agents_registry import AGENTS, PLANS, get_agent, get_shelf  # noqa: E402
+# AGENTS/PLANS/get_agent/get_shelf/get_quota 已在上文 line 17 导入，无需重复
 
 Base.metadata.create_all(bind=engine)
 
@@ -171,13 +172,47 @@ def get_customer(api_key: Optional[str] = Header(None, alias="X-API-Key"), db: S
     return Customer(name="匿名", plan="free", api_key="")
 
 
+def _count_usage(db: Session, customer: Customer) -> int:
+    return db.query(UsageRecord).filter(UsageRecord.customer_id == customer.id).count()
+
+
+def _record_usage(db: Session, customer: Customer, agent_id: str) -> None:
+    db.add(UsageRecord(customer_id=customer.id, agent_id=agent_id))
+    db.commit()
+
+
 @app.get("/api/agents")
-def list_agents(customer: Customer = Depends(get_customer)):
-    """货架：按当前客户套餐返回 Agent 列表，标注 locked / required_plan。"""
+def list_agents(customer: Customer = Depends(get_customer), db: Session = Depends(get_db)):
+    """货架：按当前客户套餐返回 Agent 列表，标注 locked / required_plan 与额度。"""
+    limit = get_quota(customer.plan)
+    used = _count_usage(db, customer)
     return {
         "plan": customer.plan,
         "customer": customer.name,
+        "quota": {
+            "limit": limit,
+            "used": used,
+            "remaining": None if limit is None else max(limit - used, 0),
+        },
         "agents": get_shelf(customer.plan),
+    }
+
+
+@app.get("/api/usage")
+def usage(customer: Customer = Depends(get_customer), db: Session = Depends(get_db)):
+    """当前客户的使用计量：总额度/已用/剩余 + 按 Agent 分布。"""
+    limit = get_quota(customer.plan)
+    rows = db.query(UsageRecord).filter(UsageRecord.customer_id == customer.id).all()
+    by_agent = {}
+    for r in rows:
+        by_agent[r.agent_id] = by_agent.get(r.agent_id, 0) + 1
+    used = len(rows)
+    return {
+        "plan": customer.plan,
+        "limit": limit,
+        "used": used,
+        "remaining": None if limit is None else max(limit - used, 0),
+        "by_agent": by_agent,
     }
 
 
@@ -198,8 +233,17 @@ async def run_agent(agent_id: str, request: Request, customer: Customer = Depend
     if agent_id not in PLANS.get(customer.plan, set()):
         raise HTTPException(status_code=403, detail=f"当前套餐({customer.plan})不可用该 Agent，需 {agent['tier']} 套餐")
 
+    # 额度计量：超限拦截（enterprise 为 None=不限）
+    limit = get_quota(customer.plan)
+    used = _count_usage(db, customer)
+    if limit is not None and used >= limit:
+        raise HTTPException(status_code=403, detail=f"套餐({customer.plan})调用额度已用尽 {used}/{limit}，请升级套餐或联系管理员")
+
     handler = agent["handler"]
     ctype = request.headers.get("content-type", "")
+
+    # 记录一次使用（所有 handler 统一计量）
+    _record_usage(db, customer, agent_id)
 
     if handler == "video":
         form = await request.form()

@@ -31,3 +31,14 @@ class Customer(Base):
     plan = Column(String(32), default="free")  # free / pro / enterprise
     api_key = Column(String(128), unique=True, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class UsageRecord(Base):
+    """客户使用计量：每次调用某 Agent 记一条（收费/额度基础）。"""
+
+    __tablename__ = "usage_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    customer_id = Column(Integer, index=True, nullable=False)
+    agent_id = Column(String(64), index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
