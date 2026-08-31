@@ -1,0 +1,6 @@
+[project]
+name = "ai_supermarket"
+version = "0.0.1"
+description = "AI超市多Agent微服务矩阵（Python实现，架构对齐 ai_supermarket Java 示例）"
+requires-python = ">=3.10"
+dependencies = []

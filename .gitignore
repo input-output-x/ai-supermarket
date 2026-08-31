@@ -1,0 +1,16 @@
+# ===== 密钥（绝不入库）=====
+.env
+.env.*
+!.env.example
+
+# ===== 运行时产物（视频/字幕/去重历史，体积大且不入库）=====
+output/
+ai_supermarket/assets/topic_history.jsonl
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.venv/
