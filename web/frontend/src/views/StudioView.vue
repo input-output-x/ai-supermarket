@@ -35,9 +35,10 @@
             </select>
           </label>
           <label>
-            <span>Provider</span>
+            <span>生成引擎</span>
             <select v-model="form.provider">
-              <option value="local">本地 fallback</option>
+              <option value="local">本地 fallback（无需 key）</option>
+              <option value="bailian">阿里百炼·逼真数字人（需 key）</option>
               <option value="heygen">HeyGen（需 key）</option>
             </select>
           </label>

@@ -10,7 +10,7 @@
 - ✅ **真实成片**：`ai-video` 用 **edge-tts 中文配音 + PIL 字幕 + ffmpeg 合成 1080×1920 竖版 mp4 + 封面**，跨平台（不依赖 libass）。
 - ✅ **客服 Agent**：`ai-service` 真实意图分类（咨询/购买/售后/合作/闲聊）+ 线索抽取 + 回复话术 + 路由，离线有启发式兜底。
 - ✅ **网关**：`gateway.py` 注册当前全部 Agent，`POST /pipeline` 串主链路，`GET /health` 展示 Agent 列表。
-- ✅ **AI 口播视频工坊（Web）**：Vue + FastAPI + MySQL，上传图片 + 口播稿即可生成 9:16 竖版口播视频，唇形同步支持可插拔 Provider。
+- ✅ **AI 口播视频工坊（Web）**：Vue + FastAPI + MySQL，上传图片 + 口播稿即可生成 9:16 竖版口播视频；唇形同步支持可插拔 Provider：**本地 fallback**（edge-tts+字幕+嘴部动画）与 **阿里云百炼 wan2.2-s2v 真实数字人（逼真对口型）**。
 
 ## 目录结构
 
@@ -77,7 +77,7 @@ cd ai_supermarket/web
 python -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
 export DATABASE_URL="mysql+mysqlconnector://user:pass@localhost/ai_supermarket_web"
-export LIPSYNC_PROVIDER=local   # 默认本地 fallback；填 heygen 需配置 HEYGEN_API_KEY
+export LIPSYNC_PROVIDER=local   # 默认本地 fallback；填 bailian 需配置 DASHSCOPE_API_KEY（阿里百炼真实数字人）；填 heygen 需配置 HEYGEN_API_KEY
 uvicorn backend.main:app --reload --port 8000
 
 # 3. 起前端
@@ -95,7 +95,7 @@ npm run dev
   如需真实语义向量，配置 `AI_SUPERMARKET_EMBED_BASE_URL / AI_SUPERMARKET_EMBED_KEY / AI_SUPERMARKET_EMBED_MODEL`。
 - 也兼容任意 OpenAI 兼容端点（用 `AI_SUPERMARKET_API_KEY` 替代 `DEEPSEEK_API_KEY` 即可）。
 
-> ⚠️ **密钥安全**：`DEEPSEEK_API_KEY` 只通过环境变量传入运行进程，绝不写入 `.py` / `.env`（已提交的是 `.env.example` 占位）。`.gitignore` 已屏蔽 `.env` 与 `output/`。
+> ⚠️ **密钥安全**：`DEEPSEEK_API_KEY` / `DASHSCOPE_API_KEY` 等只通过环境变量传入运行进程，绝不写入 `.py` / `.env`（已提交的是 `.env.example` 占位）。`.gitignore` 已屏蔽 `.env` 与 `output/`。
 
 ## 真实成片（ai-video）实现要点
 
@@ -116,4 +116,4 @@ npm run dev
 - 🔲 `ai-publish` 接抖音/视频号开放平台真实发布 API。
 - 🔲 `ai-video` 可接云端文生视频替换背景生成。
 - 🔲 `ai-service` 接评论/私域 API，把流量真正接住转私域。
-- 🔲 Web 工坊接入 HeyGen / D-ID / Kling 等真实唇形同步 Provider。
+- 🔲 Web 工坊接 HeyGen / D-ID / Kling 等更多真实唇形同步 Provider（百炼 wan2.2-s2v 已接入，HeyGen 已预留）。
