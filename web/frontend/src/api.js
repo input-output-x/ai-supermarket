@@ -9,10 +9,6 @@ export function getHealth() {
   return api.get('/api/health')
 }
 
-export function getLegacyVideo() {
-  return api.get('/api/legacy-video')
-}
-
 export function listVideos() {
   return api.get('/api/videos')
 }

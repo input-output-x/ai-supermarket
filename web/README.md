@@ -4,7 +4,6 @@ Vue3 + FastAPI + MySQL 的全栈网站：上传任意图片 + 口播稿，生成
 
 ## 功能
 
-- 保留并播放原 `ai_supermarket` 生成的成片
 - 上传图片（人物/动物/任何形象）
 - 输入口播稿、选择音色
 - 后端生成配音 + 字幕 + 嘴部动画，输出 1080×1920 MP4
@@ -54,8 +53,6 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 接口：
 - `GET /api/health`
-- `GET /api/legacy-video`：原保留成片信息
-- `GET /api/legacy-video/stream`：原保留成片流
 - `POST /api/videos`：创建生成任务（multipart：image, script, voice, provider, title）
 - `GET /api/videos/{id}`：查询任务状态
 - `GET /api/videos`：历史列表

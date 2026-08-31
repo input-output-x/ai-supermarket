@@ -1,11 +1,5 @@
 <template>
   <div class="studio">
-    <section class="card legacy">
-      <h2>保留成片</h2>
-      <p>这是之前用 Agent 链路跑出来的原始成片，仍保留在仓库外 output/ 目录。</p>
-      <video v-if="legacyUrl" :src="legacyUrl" controls preload="metadata" class="video-player"></video>
-    </section>
-
     <section class="card generator">
       <h2>生成新口播视频</h2>
       <div class="form">
@@ -74,7 +68,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { getLegacyVideo, createVideo, getVideo, listVideos } from '../api.js'
+import { createVideo, getVideo, listVideos } from '../api.js'
 
 const form = ref({
   script: '大家好，我是 AI 超市的虚拟主播。只需要一张图和一段口播稿，就能生成这样的短视频。快来试试吧！',
@@ -88,7 +82,6 @@ const generating = ref(false)
 const currentJob = ref(null)
 const resultVideoUrl = ref('')
 const jobs = ref([])
-const legacyUrl = ref('')
 const selectedVideo = ref('')
 let pollTimer = null
 
@@ -160,12 +153,6 @@ async function loadJobs() {
 }
 
 onMounted(async () => {
-  try {
-    const { data } = await getLegacyVideo()
-    legacyUrl.value = data.stream_url
-  } catch (e) {
-    console.log('legacy video not found', e)
-  }
   loadJobs()
 })
 

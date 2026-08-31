@@ -1,5 +1,4 @@
 import os
-import glob
 from pathlib import Path
 from typing import Optional
 
@@ -30,7 +29,6 @@ ROOT = Path(__file__).parent
 STORAGE = ROOT / "storage"
 UPLOADS = STORAGE / "uploads"
 VIDEOS = STORAGE / "videos"
-LEGACY_VIDEO_DIR = ROOT.parent.parent / "output"
 
 UPLOADS.mkdir(parents=True, exist_ok=True)
 VIDEOS.mkdir(parents=True, exist_ok=True)
@@ -64,19 +62,7 @@ def _process_job(job_id: int, image_path: str, script: str, voice: str, provider
 
 @app.get("/api/health")
 def health(db: Session = Depends(get_db)):
-    return {"ok": True, "legacy_video_dir": str(LEGACY_VIDEO_DIR)}
-
-
-@app.get("/api/legacy-video")
-def legacy_video():
-    """返回保留在 ai_supermarket/output/ 里的原始成片信息。"""
-    if not LEGACY_VIDEO_DIR.exists():
-        raise HTTPException(status_code=404, detail="legacy output dir not found")
-    mp4s = sorted(glob.glob(str(LEGACY_VIDEO_DIR / "*.mp4")), key=os.path.getmtime, reverse=True)
-    if not mp4s:
-        raise HTTPException(status_code=404, detail="no legacy mp4 found")
-    latest = mp4s[0]
-    return {"stream_url": "/api/legacy-video/stream", "file": latest}
+    return {"ok": True}
 
 
 @app.get("/api/videos", response_model=list[VideoOut])
@@ -138,16 +124,6 @@ def download_video(job_id: int, type: str = "video", db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="file not ready")
     from fastapi.responses import FileResponse
     return FileResponse(field, filename=f"{job_id}_{type}{Path(field).suffix}")
-
-
-@app.get("/api/legacy-video/stream")
-def legacy_video_stream():
-    if not LEGACY_VIDEO_DIR.exists():
-        raise HTTPException(status_code=404, detail="legacy output dir not found")
-    mp4s = sorted(glob.glob(str(LEGACY_VIDEO_DIR / "*.mp4")), key=os.path.getmtime, reverse=True)
-    if not mp4s:
-        raise HTTPException(status_code=404, detail="no legacy mp4 found")
-    return FileResponse(mp4s[0], media_type="video/mp4", filename="legacy.mp4")
 
 
 # 静态文件：生成的视频可直接访问
