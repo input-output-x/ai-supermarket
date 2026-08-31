@@ -11,6 +11,7 @@
 - ✅ **客服 Agent**：`ai-service` 真实意图分类（咨询/购买/售后/合作/闲聊）+ 线索抽取 + 回复话术 + 路由，离线有启发式兜底。
 - ✅ **网关**：`gateway.py` 注册当前全部 Agent，`POST /pipeline` 串主链路，`GET /health` 展示 Agent 列表。
 - ✅ **AI 口播视频工坊（Web）**：Vue + FastAPI + MySQL，上传图片 + 口播稿即可生成 9:16 竖版口播视频；唇形同步支持可插拔 Provider：**本地 fallback**（edge-tts+字幕+嘴部动画）与 **阿里云百炼 wan2.2-s2v 真实数字人（逼真对口型）**。
+- ✅ **Agent 货架 + 套餐权限壳（Web）**：`/api/agents` 按客户套餐（free/pro/enterprise）返回可用/锁定 Agent 列表；客户可自由选用——选题/脚本/客服/财税为**真实大模型输出**，video 为真实成片，delivery/analytics 为脚手架提示。新增 Agent = 在 `web/backend/agents_registry.py` 加一条。
 
 ## 目录结构
 
@@ -109,6 +110,26 @@ npm run dev
 
 仓库：`https://github.com/input-output-x/ai-supermarket`
 （`.env` / `output/` / 密钥均不入库。）
+
+## 按需取代码（sparse-checkout）
+
+标准 `git clone` 会拉取整个仓库。若你只想取**某个 Agent 的代码**（而不是全部），用 sparse-checkout 只检出指定目录，体积更小、更快：
+
+```bash
+# 只取「视频 Agent」+ 它依赖的核心内核（core 提供 LLM/抽象，几乎所有 Agent 都依赖）
+git clone --filter=blob:none --sparse https://github.com/input-output-x/ai-supermarket
+cd ai_supermarket
+git sparse-checkout set ai_supermarket/agents/video.py ai_supermarket/core
+
+# 想再加「选题 Agent」
+git sparse-checkout add ai_supermarket/agents/topic.py
+```
+
+要点：
+- 每个 Agent 是 `ai_supermarket/agents/` 下的独立文件，可单独取。
+- **Agent 几乎都依赖 `ai_supermarket/core/`**（LLM 客户端、Agent 抽象、上下文），单独取某个 Agent 时务必连 `core/` 一起取，否则跑不起来。
+- 想更彻底地"每个 Agent 一个仓库"，可把 `agents/*` 拆成 git submodule（主仓用 submodule 引用，clone 时 `--recurse-submodules=<只选的>`）；但小项目维护成本高，一般先用 sparse-checkout 即可。
+- 注意：**终端客户不使用 git**。客户用的"任选 Agent"发生在部署出去的 Web 工坊（见 `web/`，含 Agent 货架 + 套餐权限壳），与 clone 无关。
 
 ## 后续待办
 

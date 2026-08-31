@@ -58,6 +58,31 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 - `GET /api/videos`：历史列表
 - `GET /api/videos/{id}/download?type=video|audio|cover`
 
+## Agent 货架（客户任选 Agent + 套餐权限壳）
+
+Web 工坊不仅是视频工具，也是 **AI 超市的货架**：客户登录后按套餐看到不同的 Agent，自由选用。
+
+- `GET /api/agents`：返回当前客户套餐下的 Agent 货架，每个 Agent 标注 `locked`（是否该套餐不可用）与 `required_plan`。
+  - 请求头带 `X-API-Key` 区分客户；不带则按 `free` 套餐（匿名体验）。
+- `POST /api/agents/{id}/run`：运行指定 Agent。
+  - `video` 类走 multipart（image + script + voice + provider），返回视频任务号。
+  - 纯文本类（`topic`/`script`/`service`/`finance`）走 JSON，走真实大模型（Deepseek）输出。
+  - `scaffold` 类（`delivery`/`analytics`）返回"待交付"提示。
+
+套餐（权限壳核心，定义在 `backend/agents_registry.py`）：
+
+| 套餐 | 可用 Agent |
+| --- | --- |
+| `free` | 口播视频、爆款选题 |
+| `pro` | + 口播脚本、抖音发布、私域承接客服、财税专家 |
+| `enterprise` | + 交付调度、数据复盘 |
+
+演示客户（首次启动自动播种）：`sk-free-demo-2026` / `sk-pro-demo-2026` / `sk-ent-demo-2026`。
+
+新增一个上架 Agent：在 `backend/agents_registry.py` 的 `AGENTS` 列表加一条（id / 名称 / 图标 / 分类 / 描述 / 套餐层级 / handler / 输入字段 schema），并在 `PLANS` 里把它加入对应套餐即可，前端货架自动渲染。
+
+> 前端「Agent 货架」页（`/shelf`）提供套餐切换体验：切换 free/pro/enterprise 可直观看到哪些 Agent 被锁定。
+
 ### 3. 前端
 
 ```bash

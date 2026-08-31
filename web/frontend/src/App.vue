@@ -2,7 +2,10 @@
   <div class="app">
     <header>
       <h1>AI 超市 · 口播视频工坊</h1>
-      <p>上传任意图片 + 口播稿，一键生成 9:16 竖版短视频</p>
+      <nav class="tabs">
+        <RouterLink to="/" exact-active-class="active">口播视频工坊</RouterLink>
+        <RouterLink to="/shelf" active-class="active">Agent 货架</RouterLink>
+      </nav>
     </header>
     <main>
       <RouterView />
@@ -34,6 +37,17 @@ header {
 }
 header h1 { margin: 0 0 8px; font-size: 24px; }
 header p { margin: 0; opacity: 0.9; }
+.tabs { margin-top: 12px; display: flex; gap: 10px; justify-content: center; }
+.tabs a {
+  color: #fff;
+  text-decoration: none;
+  padding: 6px 16px;
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: 999px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+.tabs a.active { background: #fff; color: #1d4ed8; opacity: 1; font-weight: 600; }
 main { flex: 1; padding: 24px; }
 footer {
   text-align: center;
