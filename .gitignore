@@ -21,3 +21,4 @@ dist/
 web/backend/storage/
 web/backend/*.db
 web/backend/.env
+vite.config.js.timestamp-*.mjs
