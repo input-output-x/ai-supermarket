@@ -11,7 +11,8 @@
 - ✅ **客服 Agent**：`ai-service` 真实意图分类（咨询/购买/售后/合作/闲聊）+ 线索抽取 + 回复话术 + 路由，离线有启发式兜底。
 - ✅ **网关**：`gateway.py` 注册当前全部 Agent，`POST /pipeline` 串主链路，`GET /health` 展示 Agent 列表。
 - ✅ **AI 口播视频工坊（Web）**：Vue + FastAPI + MySQL，上传图片 + 口播稿即可生成 9:16 竖版口播视频；唇形同步支持可插拔 Provider：**本地 fallback**（edge-tts+字幕+嘴部动画）与 **阿里云百炼 wan2.2-s2v 真实数字人（逼真对口型）**。
-- ✅ **Agent 货架 + 套餐权限壳（Web）**：`/api/agents` 按客户套餐（free/pro/enterprise）返回可用/锁定 Agent 列表；客户可自由选用——选题/脚本/客服/财税为**真实大模型输出**，video 为真实成片，delivery/analytics 为脚手架提示。新增 Agent = 在 `web/backend/agents_registry.py` 加一条。
+- ✅ **Agent 货架 + 套餐权限壳（Web）**：`/api/agents` 按客户套餐（free/pro/enterprise）返回可用/锁定 Agent 列表；客户可自由选用——选题/脚本/客服/财税/提示词工程师为**真实大模型输出**，video 为真实成片，delivery/analytics 为真实逻辑。新增 Agent = 在 `web/backend/agents_registry.py` 加一条。
+- ✅ **提示词工程师 Agent（货架新增，pro 档）**：双模式——①通用：把模糊目标写成结构化高质量提示词（角色/背景/任务/约束/输出格式/示例）；②针对超市任一 Agent：注入该 Agent 真实字段与口吻，产出正好能填进其表单的专用提示词；③优化：指出已有提示词的问题并给改进版。离线有结构化模板兜底，联网（Deepseek）出成品。
 - ✅ **计费 / 支付（Web）**：Stripe 真实收款已接入——`/api/billing/plans`（价格）、`/api/billing/checkout`（创建结账跳转 Stripe 托管页）、`/api/billing/webhook/stripe`（支付成功 → 升级套餐 + 重置额度）；前端「套餐 / 计费」页（`/billing`）三档套餐卡片一键升级。微信支付 `WeChatProvider` 为预留骨架（实现 `WeChatProvider` 抽象即可启用）。
 
 ## 目录结构

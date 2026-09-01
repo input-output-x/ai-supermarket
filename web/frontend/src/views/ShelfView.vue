@@ -61,7 +61,7 @@
             <input v-if="sch.type === 'text'" v-model="formValues[sch.key]" :placeholder="sch.label" />
             <textarea v-else-if="sch.type === 'textarea'" v-model="formValues[sch.key]" rows="4" :placeholder="sch.label"></textarea>
             <select v-else-if="sch.type === 'select'" v-model="formValues[sch.key]">
-              <option v-for="o in (sch.options || [])" :key="o" :value="o">{{ o }}</option>
+              <option v-for="o in (sch.options || [])" :key="optValue(o)" :value="optValue(o)">{{ optLabel(o) }}</option>
             </select>
             <input v-else-if="sch.type === 'file'" type="file" accept="image/*" @change="onModalFile($event, sch.key)" />
           </label>
@@ -108,6 +108,14 @@ const categories = ['内容生产', '专业服务']
 
 function planLabel(p) {
   return { free: '免费版', pro: '专业版', enterprise: '企业版' }[p] || p
+}
+
+// select 选项兼容「字符串」或「{value,label}」两种写法
+function optValue(o) {
+  return (o && typeof o === 'object') ? o.value : o
+}
+function optLabel(o) {
+  return (o && typeof o === 'object') ? o.label : o
 }
 
 function agentsByCat(cat) {

@@ -4,6 +4,7 @@
 - handler="video"  → 复用口播视频工坊流程（真实生成 9:16 视频）
 - handler="llm"    → 通用大模型调用（选题/脚本/客服/财税/交付/复盘等纯文本 Agent，真实输出）
 - handler="publish" → 抖音开放平台真实对接（OAuth 授权 + 上传 + 发布；未配置时返回授权链接，不假成功）
+- handler="prompt"  → 提示词工程师（生成/优化高质量提示词；可针对货架任一 Agent 出专用提示词）
 
 套餐：free < pro < enterprise，决定客户能用哪些 Agent。
 新增 Agent = 在这里加一条 + （如需要）在 main.py 的 _run_llm / _run_video 里接逻辑。
@@ -12,8 +13,8 @@
 # 套餐 → 可用 Agent 集合（权限壳的核心）
 PLANS = {
     "free": {"video", "topic"},
-    "pro": {"video", "topic", "script", "publish", "service", "finance"},
-    "enterprise": {"video", "topic", "script", "publish", "service", "finance", "delivery", "analytics"},
+    "pro": {"video", "topic", "script", "publish", "service", "finance", "prompt"},
+    "enterprise": {"video", "topic", "script", "publish", "service", "finance", "delivery", "analytics", "prompt"},
 }
 
 # 套餐 → 调用额度上限（收费基础）。None = 不限量（enterprise 可作为旗舰档）。
@@ -151,6 +152,38 @@ AGENTS = [
                         "只返回 JSON：{summary, highlights:[], issues:[], next_actions:[{area, action, weight}]}",
         "input_schema": [
             {"key": "metrics", "label": "数据（播放/转化等）", "type": "textarea", "required": True},
+        ],
+    },
+    {
+        "id": "prompt",
+        "name": "提示词工程师",
+        "icon": "✍️",
+        "category": "专业服务",
+        "description": "把模糊想法写成结构化高质量提示词；可针对超市任一 Agent 出专用提示词；也能优化你已有的提示词",
+        "tier": "pro",
+        "handler": "prompt",
+        "system_prompt": "",
+        "input_schema": [
+            {"key": "mode", "label": "模式", "type": "select",
+             "options": ["generate", "optimize"], "required": False},
+            {"key": "goal", "label": "目标 / 想法（生成模式填）", "type": "textarea", "required": False},
+            {"key": "existing_prompt", "label": "已有提示词（优化模式填）", "type": "textarea", "required": False},
+            {"key": "target", "label": "针对超市哪个 Agent（可选）", "type": "select",
+             "options": [
+                 {"value": "general", "label": "通用（不指定 Agent）"},
+                 {"value": "topic", "label": "💡 爆款选题"},
+                 {"value": "script", "label": "📝 口播脚本"},
+                 {"value": "video", "label": "🎬 口播视频生成"},
+                 {"value": "publish", "label": "📤 抖音发布"},
+                 {"value": "service", "label": "🤝 私域承接客服"},
+                 {"value": "finance", "label": "🧾 财税专家"},
+                 {"value": "delivery", "label": "📦 交付调度"},
+                 {"value": "analytics", "label": "📊 数据复盘"},
+             ],
+             "required": False},
+            {"key": "audience", "label": "目标受众（可选）", "type": "text", "required": False},
+            {"key": "constraints", "label": "约束（语气/长度/禁忌，可选）", "type": "text", "required": False},
+            {"key": "output_format", "label": "期望输出格式（可选）", "type": "text", "required": False},
         ],
     },
 ]

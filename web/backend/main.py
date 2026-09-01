@@ -24,6 +24,7 @@ if str(_REPO_ROOT) not in sys.path:
 from ai_supermarket.core.llm import get_provider as get_llm_provider  # noqa: E402
 from ai_supermarket.core.context import AgentContext  # noqa: E402
 from ai_supermarket.agents.publish import PublishAgent, DouyinClient  # noqa: E402
+from ai_supermarket.agents.prompt_engineer import PromptEngineerAgent  # noqa: E402
 # AGENTS/PLANS/get_agent/get_shelf/get_quota 已在上文 line 17 导入，无需重复
 
 Base.metadata.create_all(bind=engine)
@@ -360,6 +361,36 @@ async def run_agent(agent_id: str, request: Request, customer: Customer = Depend
                 "publishResult": ctx.get("publishResult"),
             },
         }
+
+    if handler == "prompt":
+        if "multipart" in ctype:
+            form = await request.form()
+            data = {k: form.get(k) for k in form.keys()}
+        else:
+            data = await request.json()
+        # 若指定了超市内某个 Agent，拉取其真实规格注入，让产出提示词贴合该 Agent 字段与口吻
+        target = (data.get("target") or "").strip()
+        target_spec = None
+        if target and target != "general":
+            t = get_agent(target)
+            if t:
+                target_spec = {
+                    "name": t.get("name"),
+                    "description": t.get("description"),
+                    "input_schema": t.get("input_schema", []),
+                    "system_prompt": t.get("system_prompt", ""),
+                }
+        runner = PromptEngineerAgent()
+        ctx = runner.execute(AgentContext({
+            "mode": (data.get("mode") or "generate"),
+            "goal": data.get("goal") or "",
+            "existing_prompt": data.get("existing_prompt") or "",
+            "target_spec": target_spec,
+            "audience": data.get("audience") or "",
+            "constraints": data.get("constraints") or "",
+            "output_format": data.get("output_format") or "",
+        }))
+        return {"agent": agent_id, "kind": "prompt", "mode": ctx.get("mode"), "result": ctx.get("result")}
 
     raise HTTPException(status_code=500, detail="unknown handler")
 
