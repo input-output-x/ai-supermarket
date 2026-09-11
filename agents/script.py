@@ -5,9 +5,9 @@
 输出：voiceover / shots / captionTiming
 工具：LLM + 模板引擎（此处 demo 走 LLM，可换结构化 prompt 模板）
 """
-from ..core.agent import AbstractAgent
-from ..core.context import AgentContext
-from ..core.llm import get_provider, extract_json
+from core.agent import AbstractAgent
+from core.context import AgentContext
+from core.llm import get_provider, extract_json
 import json
 
 

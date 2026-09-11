@@ -14,9 +14,9 @@
 import re
 import json
 
-from ..core.agent import AbstractAgent
-from ..core.context import AgentContext
-from ..core.llm import get_provider, extract_json
+from core.agent import AbstractAgent
+from core.context import AgentContext
+from core.llm import get_provider, extract_json
 
 # 需求类型 → 模板 SOP（离线兜底用）
 TEMPLATES = {

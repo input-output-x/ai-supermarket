@@ -20,8 +20,8 @@ import requests
 from typing import Optional
 from urllib.parse import quote
 
-from ..core.agent import AbstractAgent
-from ..core.context import AgentContext
+from core.agent import AbstractAgent
+from core.context import AgentContext
 
 DOUYIN_BASE = "https://open.douyin.com"
 

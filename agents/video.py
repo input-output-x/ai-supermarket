@@ -16,8 +16,8 @@ import time
 import asyncio
 import subprocess
 
-from ..core.agent import AbstractAgent
-from ..core.context import AgentContext
+from core.agent import AbstractAgent
+from core.context import AgentContext
 
 
 def _project_root() -> str:

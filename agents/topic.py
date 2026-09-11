@@ -9,9 +9,9 @@ import os
 import re
 import json
 
-from ..core.agent import AbstractAgent
-from ..core.context import AgentContext
-from ..core.llm import get_provider, cosine, extract_json
+from core.agent import AbstractAgent
+from core.context import AgentContext
+from core.llm import get_provider, cosine, extract_json
 
 
 def _assets_dir() -> str:

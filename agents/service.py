@@ -19,9 +19,9 @@
 import re
 import json
 
-from ..core.agent import AbstractAgent
-from ..core.context import AgentContext
-from ..core.llm import get_provider, extract_json
+from core.agent import AbstractAgent
+from core.context import AgentContext
+from core.llm import get_provider, extract_json
 
 INTENTS = ["咨询", "购买", "售后", "合作", "闲聊"]
 ROUTE_MAP = {

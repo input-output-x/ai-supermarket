@@ -15,9 +15,9 @@ import feedparser
 from urllib3.util.retry import Retry
 from abc import abstractmethod
 
-from ..core.agent import AbstractAgent
-from ..core.context import AgentContext
-from ..core.llm import get_provider
+from core.agent import AbstractAgent
+from core.context import AgentContext
+from core.llm import get_provider
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; AIRadar/1.0)"}
 TIMEOUT = 8
