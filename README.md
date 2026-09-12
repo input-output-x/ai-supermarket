@@ -2,7 +2,13 @@
 
 > 多 Agent 矩阵——像超市货架，客户按需选用。
 
-## Agent 货架（8 个）
+## 前置 Agent（动手前先过这一关）
+
+| # | Agent | 说明 |
+|---|-------|------|
+| 0 | **clarify** · 需求澄清官 | 把模糊需求问清楚：按维度盘点缺口 → 生成带选项的问题 → 说明风险，避免方向跑偏、胡说八道 |
+
+## 业务 Agent 货架（8 个）
 
 | # | Agent | 说明 |
 |---|-------|------|
@@ -25,7 +31,8 @@
 │   ├── agent.py       #   AbstractAgent 基类
 │   ├── context.py     #   AgentContext 上下文
 │   └── llm.py         #   LLM 客户端（Deepseek）
-└── agents/            # 8 个 Agent（可扩展）
+└── agents/            # 9 个 Agent（可扩展）
+    ├── clarify.py      #   需求澄清官（前置）
     ├── topic.py
     ├── script.py
     ├── video.py
