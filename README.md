@@ -40,7 +40,8 @@
     ├── service.py
     ├── delivery.py
     ├── analytics.py
-    └── radar.py
+    ├── radar.py
+    └── bench.py        #   实测横评工具：同一提示词发 GPT/Claude/DeepSeek/Kimi，有 key 才真跑（不编造）
 ```
 
 ## GitHub
