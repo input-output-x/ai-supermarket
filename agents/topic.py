@@ -13,6 +13,7 @@
 """
 import json
 import os
+import re
 
 from core.agent import AbstractAgent
 from core.context import AgentContext
@@ -28,14 +29,25 @@ _SYSTEM_PROMPT = """你是抖音爆款选题专家，尤其擅长「AI 教程 / 
   "hook": "黄金3秒口播钩子（1句，制造反差/悬念/利益点）",
   "angle": "内容角度（1句，说明这条视频的独特切入点）",
   "outline": ["分镜1", "分镜2", "分镜3", "分镜4"],
-  "postTips": "发布建议（最佳时长/发布时间/引导互动话术，1句）",
+  "postTips": ["发布建议1（最佳时长）", "发布建议2（发布时间）", "发布建议3（引导互动话术）"],
   "audience": "目标人群（1句）",
   "heatScore": 85
 }
 要求：
 - 标题不能像广告，避免「一站式/代运营/解决方案/赋能」这类 B 端词；
 - 多用具体数字、对比、反常识；封面文案要让人一眼想点；
+- altTitles / outline / postTips 必须返回 JSON 数组（多条），不要返回成一段字符串；
 - heatScore 是你对爆款潜力的判断（0-100 整数）。"""
+
+
+def _as_list(v):
+    """把列表字段归一化为 list：LLM 偶尔会把数组返回成整段字符串，需按换行/标点拆开。"""
+    if isinstance(v, list):
+        return [str(x).strip() for x in v if str(x).strip()]
+    if isinstance(v, str):
+        parts = re.split(r"[\n。；;]", v)
+        return [p.strip() for p in parts if p.strip()]
+    return []
 
 # 不同场景的选题倾向提示（离线兜底用）
 _SCENARIO_HINTS = {
@@ -82,6 +94,11 @@ class TopicAgent(AbstractAgent):
         data.setdefault("postTips", "晚8点发，开头问一个问题引导评论")
         data.setdefault("audience", "想学AI的普通人/职场人")
         data.setdefault("heatScore", 70)
+
+        # 列表字段容错：LLM 偶尔把数组返回成整段字符串，归一化为 list，避免下游按字符迭代
+        data["altTitles"] = _as_list(data.get("altTitles")) or [topic]
+        data["outline"] = _as_list(data.get("outline")) or ["钩子", "演示", "对比", "引导"]
+        data["postTips"] = _as_list(data.get("postTips")) or ["晚8点发，开头问一个问题引导评论"]
 
         return (ctx.put("topicTitle", data["topicTitle"])
                    .put("altTitles", data["altTitles"])
